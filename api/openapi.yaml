@@ -1,0 +1,2257 @@
+openapi: 3.0.0
+info:
+  title: TCC M 3rd party API Release
+  version: "1.6"
+servers:
+- url: "https://{deviceIP}:443"
+  variables:
+    deviceIP:
+      default: ""
+security:
+- basicAuthApi: []
+paths:
+  /api/ssc/version:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_api_ssc_version_get_200_response'
+          description: Successful operation
+        "500":
+          description: Internal server error
+      security: []
+      summary: Get the schema version
+      tags:
+      - SSC
+  /api/ssc/schema:
+    get:
+      responses:
+        "200":
+          content:
+            application/openapi+json:
+              schema:
+                type: string
+          description: Successful operation
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Get the address tree
+      tags:
+      - SSC
+  /api/ssc/state/subscriptions:
+    get:
+      description: "Start a subscription. A successful request returns a UUID that\
+        \ can be used to manage the created subscription. The ``/ssc/state`` address\
+        \ is specific to the session between client and server. This means that it\
+        \ is possible that different clients subscribe the same command with different\
+        \ arguments hence the immediate reply as well as the resulting state of the\
+        \ server will differ for each client respectively. This also means, that there\
+        \ can be only a limited number of sessions per client and user. Instead of\
+        \ generating new subscriptions the \"old\" subscription should be altered."
+      responses:
+        "200":
+          content:
+            text/event-stream:
+              schema:
+                description: An initial stream (almost like a text file).
+                example: "event:open\\ndata:{\"path\":\"/api/ssc/state/subscriptions/31875a94-29e6-4fb0-ab4d-7f0bbd6e1bc8\"\
+                  ,\"sessionUUID\":\"31875a94-29e6-4fb0-ab4d-7f0bbd6e1bc8\"\\n\\n"
+                type: string
+          description: Successful operation returning the UUID to manage this subscription
+            and the initial Server Side Event (SSE) stream
+          headers:
+            Content-Location:
+              description: UUID of the just created subscription return in the Location
+                Field of the HTTP response header
+              explode: false
+              schema:
+                example: 31875a94-29e6-4fb0-ab4d-7f0bbd6e1bc8
+                type: string
+              style: simple
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Start a subscription
+      tags:
+      - SSC
+  /api/ssc/state/subscriptions/{sessionUUID}:
+    delete:
+      description: End the subscription associated with the sessionUUID
+      parameters:
+      - explode: false
+        in: path
+        name: sessionUUID
+        required: true
+        schema:
+          example: 31875a94-29e6-4fb0-ab4d-7f0bbd6e1bc8
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: Successful operation
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "422":
+          description: "Not found since the resource is not existing (e.g., the URL\
+            \ contains a wrong ID)"
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: End an existing subscription
+      tags:
+      - SSC
+    get:
+      description: Get the list of subscriptions associated with the sessionUUID
+      parameters:
+      - explode: false
+        in: path
+        name: sessionUUID
+        required: true
+        schema:
+          example: 31875a94-29e6-4fb0-ab4d-7f0bbd6e1bc8
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                example:
+                - /device/site
+                - /device/identification
+                items:
+                  example: /device/site
+                  type: string
+                type: array
+          description: Successful operation
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "422":
+          description: "Not found since the resource is not existing (e.g., the URL\
+            \ contains a wrong ID)"
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Get the subscription list
+      tags:
+      - SSC
+    put:
+      parameters:
+      - explode: false
+        in: path
+        name: sessionUUID
+        required: true
+        schema:
+          example: 31875a94-29e6-4fb0-ab4d-7f0bbd6e1bc8
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              example:
+              - /device/site
+              - /device/identification
+              - /device/state
+              items:
+                example: /device/site
+                type: string
+              type: array
+      responses:
+        "200":
+          description: Successful operation
+        "400":
+          description: "Bad request since the format is not correct (e.g., wrong JSON\
+            \ payload)"
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "422":
+          description: "Not found since the resource is not existing (e.g., the URL\
+            \ contains a wrong ID)"
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Set or change the list of subscriptions associated with the sessionUUID
+      tags:
+      - SSC
+  /api/ssc/state/subscriptions/{sessionUUID}/add:
+    put:
+      description: Add a set of resources to the list of subscriptions associated
+        with the sessionUUID
+      parameters:
+      - explode: false
+        in: path
+        name: sessionUUID
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              example:
+              - /device/site
+              - /device/identification
+              items:
+                example: /device/site
+                type: string
+              type: array
+      responses:
+        "200":
+          description: Successful operation
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_api_ssc_state_subscriptions__sessionUUID__add_put_400_response'
+          description: The request to add to the subscription was invalid
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "422":
+          description: "Not found since the resource is not existing (e.g., the URL\
+            \ contains a wrong ID)"
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Add resource(s) to the subscription list
+      tags:
+      - SSC
+  /api/ssc/state/subscriptions/{sessionUUID}/remove:
+    put:
+      description: Remove a set of resources from the list of subscriptions associated
+        with the sessionUUID
+      parameters:
+      - explode: false
+        in: path
+        name: sessionUUID
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              items:
+                example: /api/device/site
+                type: string
+              type: array
+      responses:
+        "200":
+          description: Successful operation
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_api_ssc_state_subscriptions__sessionUUID__remove_put_400_response'
+          description: The request to remove to the subscription was invalid
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "422":
+          description: "Not found since the resource is not existing (e.g., the URL\
+            \ contains a wrong ID)"
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Remove resource(s) from the subscription list
+      tags:
+      - SSC
+  /api/device/identity:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_api_device_identity_get_200_response'
+          description: Successful operation
+        "500":
+          description: Internal server error
+      security: []
+      summary: Get the device identity
+      tags:
+      - Device
+  /api/device/identification:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_api_device_identification_get_200_response'
+          description: Successful operation
+        "500":
+          description: Internal server error
+      security: []
+      summary: Get the state of device identification
+      tags:
+      - Device
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/_api_device_identification_put_request'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_api_device_identification_put_request'
+          description: Successful operation
+        "400":
+          description: "Bad request since the format is not correct (e.g., wrong JSON\
+            \ payload)"
+        "409":
+          description: Conflict. Activating identification was not possible because
+            of internal device state.
+        "500":
+          description: Internal server error
+      security: []
+      summary: Set the state of device identification
+      tags:
+      - Device
+  /api/device/site:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_api_device_site_get_200_response'
+          description: Successful operation
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Get the device site information
+      tags:
+      - Device
+  /api/device/state:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_api_device_state_get_200_response'
+          description: Successful operation
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Get the device state
+      tags:
+      - Device
+  /api/firmware/update/state:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_api_firmware_update_state_get_200_response'
+          description: Successful operation
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Get the state of a firmware update
+      tags:
+      - Firmware Update
+  /api/audio/outputs/global/mute:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_api_audio_outputs_global_mute_get_200_response'
+          description: Successful operation
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Get the mute status of the device
+      tags:
+      - Audio
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/_api_audio_outputs_global_mute_put_request'
+      responses:
+        "200":
+          description: Successful operation
+        "400":
+          description: "Bad request since the format is not correct (e.g., wrong JSON\
+            \ payload)"
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Mute all audio outputs
+      tags:
+      - Audio
+  /api/audio/inputs/microphone/beam:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_api_audio_inputs_microphone_beam_get_200_response'
+          description: Successful operation
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Get the current beam settings
+      tags:
+      - Audio
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/_api_audio_inputs_microphone_beam_put_request'
+      responses:
+        "200":
+          description: Successful operation
+        "400":
+          description: "Bad request since the format is not correct (e.g., wrong JSON\
+            \ payload)"
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "422":
+          description: Unprocessable payload (e.g. offset not a multiple of 30)
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Set the current beam settings
+      tags:
+      - Audio
+  /api/audio/inputs/microphone/beam/direction:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_api_audio_inputs_microphone_beam_direction_get_200_response'
+          description: Successful operation
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Get the current direction of the beam
+      tags:
+      - Audio
+      - FastResource
+  /api/audio/inputs/microphone/level:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_api_audio_inputs_microphone_level_get_200_response'
+          description: Successful operation
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Get the current microphone input level
+      tags:
+      - Audio
+      - FastResource
+  /api/audio/inputs/reference/level:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_api_audio_inputs_reference_level_get_200_response'
+          description: Successful operation
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Get the current level of the digital reference input
+      tags:
+      - Audio
+      - FastResource
+  /api/audio/roomInUse:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_api_audio_roomInUse_get_200_response'
+          description: Successful operation
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Get the current room in use state
+      tags:
+      - Audio
+  /api/audio/roomInUse/activityLevel:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_api_audio_roomInUse_activityLevel_get_200_response'
+          description: Successful operation
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Get the current room in use activity level
+      tags:
+      - Audio
+      - FastResource
+  /api/audio/roomInUse/config:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_api_audio_roomInUse_config_get_200_response'
+          description: Successful operation
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Get the configuration of the room in use feature
+      tags:
+      - Audio
+  /api/audio/outputs/analog:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_api_audio_outputs_analog_get_200_response'
+          description: Successful operation
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Get the current settings of the analog output
+      tags:
+      - Audio
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/_api_audio_outputs_analog_put_request'
+      responses:
+        "200":
+          description: Successful operation
+        "400":
+          description: "Bad request since the format is not correct (e.g., wrong JSON\
+            \ payload)"
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Set the analog output settings
+      tags:
+      - Audio
+  /api/audio/outputs/dante/farEnd:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_api_audio_outputs_dante_farEnd_get_200_response'
+          description: Successful operation
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Get the current settings of the far end output
+      tags:
+      - Audio
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/_api_audio_outputs_dante_farEnd_put_request'
+      responses:
+        "200":
+          description: Successful operation
+        "400":
+          description: "Bad request since the format is not correct (e.g., wrong JSON\
+            \ payload)"
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "422":
+          description: Unprocessable Value (e.g out of range)
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Set the far end output settings
+      tags:
+      - Audio
+  /api/audio/voiceLift:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_api_audio_voiceLift_get_200_response'
+          description: Successful operation
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Get the current voice lift settings
+      tags:
+      - Audio
+    put:
+      description: Set the current voice lift settings. Can be applied to the local
+        output with the `voiceLiftEnabled` property.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/_api_audio_voiceLift_put_request'
+      responses:
+        "200":
+          description: Successful operation
+        "400":
+          description: "Bad request since the format is not correct (e.g., wrong JSON\
+            \ payload)"
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "422":
+          description: Unprocessable Value (e.g out of range)
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Set the current voice lift settings
+      tags:
+      - Audio
+  /api/audio/outputs/dante/local:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_api_audio_outputs_dante_local_get_200_response'
+          description: Successful operation
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Get the current settings of the local output
+      tags:
+      - Audio
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/_api_audio_outputs_dante_local_put_request'
+      responses:
+        "200":
+          description: Successful operation
+        "400":
+          description: "Bad request since the format is not correct (e.g., wrong JSON\
+            \ payload)"
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "422":
+          description: Unprocessable Value (e.g out of range)
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Set the local output settings
+      tags:
+      - Audio
+  /api/audio/inputs/dante/reference:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_api_audio_inputs_dante_reference_get_200_response'
+          description: Successful operation
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Get settings of the reference input
+      tags:
+      - Audio
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/_api_audio_inputs_dante_reference_put_request'
+      responses:
+        "200":
+          description: Successful operation
+        "400":
+          description: "Bad request since the format is not correct (e.g., wrong JSON\
+            \ payload)"
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "409":
+          description: Conflict. Trying to set manual gain while farEndAutoAdjustEnabled
+            is true
+        "422":
+          description: "Unprocessable entity, because manual gain conflicts with farEndAutoAdjustEnabled\
+            \ value in the request"
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Set reference input settings
+      tags:
+      - Audio
+  /api/audio/equalizer:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_api_audio_equalizer_get_200_response'
+          description: Successful operation
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Get the current equalizer settings
+      tags:
+      - Audio
+    put:
+      description: Set the current equalizer settings. Can be applied to a specific
+        output with the `equalizerEnabled` property. Note that all equalizers share
+        the same settings from this route.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/_api_audio_equalizer_put_request'
+      responses:
+        "200":
+          description: Successful operation
+        "400":
+          description: "Bad request since the format is not correct (e.g., wrong JSON\
+            \ payload)"
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "422":
+          description: Unprocessable Value (e.g out of range)
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Set the current equalizer settings
+      tags:
+      - Audio
+  /api/audio/noiseGate:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_api_audio_noiseGate_get_200_response'
+          description: Successful operation
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Get the current noise gate settings
+      tags:
+      - Audio
+    put:
+      description: Set the current noise gate settings. Can be applied to a specific
+        output with the `noiseGateEnabled` property. Note that all noise gates share
+        the same settings from this route.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/_api_audio_noiseGate_put_request'
+      responses:
+        "200":
+          description: Successful operation
+        "400":
+          description: "Bad request since the format is not correct (e.g., wrong JSON\
+            \ payload)"
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "422":
+          description: Unprocessable Value (e.g out of range)
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Set the current noise gate settings
+      tags:
+      - Audio
+  /api/device/leds/ring:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_api_device_leds_ring_get_200_response'
+          description: Successful operation
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Get the current led ring settings
+      tags:
+      - Device
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/_api_device_leds_ring_put_request'
+      responses:
+        "200":
+          description: Successful operation
+        "400":
+          description: "Bad request since the format is not correct (e.g., wrong JSON\
+            \ payload)"
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Set the current led ring brightness and colors
+      tags:
+      - Device
+  /api/device/power/poe/daisychain:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_api_device_power_poe_daisychain_get_200_response'
+          description: Successful operation
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Get the daisy chain and PoE state
+      tags:
+      - Device
+  /api/audio/inputs/microphone/exclusionZones:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                default:
+                - id: 0
+                  enabled: true
+                  elevation:
+                    min: 0
+                    max: 10
+                  azimuth:
+                    min: 0
+                    max: 360
+                - id: 1
+                  enabled: false
+                  elevation:
+                    min: 10
+                    max: 50
+                  azimuth:
+                    min: 20
+                    max: 70
+                - id: 2
+                  enabled: false
+                  elevation:
+                    min: 10
+                    max: 50
+                  azimuth:
+                    min: 110
+                    max: 160
+                - id: 3
+                  enabled: false
+                  elevation:
+                    min: 10
+                    max: 50
+                  azimuth:
+                    min: 200
+                    max: 250
+                - id: 4
+                  enabled: false
+                  elevation:
+                    min: 10
+                    max: 50
+                  azimuth:
+                    min: 290
+                    max: 340
+                items:
+                  $ref: '#/components/schemas/_api_audio_inputs_microphone_exclusionZones_get_200_response_inner'
+                maxItems: 5
+                minItems: 5
+                type: array
+                uniqueItems: true
+          description: Successful operation
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Get the supported exclusion zone ids
+      tags:
+      - Audio
+  /api/audio/inputs/microphone/exclusionZones/{id}:
+    get:
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          example: 0
+          maximum: 4
+          minimum: 0
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_api_audio_inputs_microphone_exclusionZones__id__get_200_response'
+          description: Successful operation
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "404":
+          description: "Not found since the resource is not existing (e.g., the URL\
+            \ contains a wrong ID)"
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Get the current exclusion zone settings of zone number `id`
+      tags:
+      - Audio
+    put:
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          example: 0
+          maximum: 4
+          minimum: 0
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/_api_audio_inputs_microphone_exclusionZones__id__put_request'
+      responses:
+        "200":
+          description: Successful operation
+        "400":
+          description: "Bad request since the format is not correct (e.g., wrong JSON\
+            \ payload)"
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "404":
+          description: "Not found since the resource is not existing (e.g., the URL\
+            \ contains a wrong ID)"
+        "409":
+          description: Conflict. Trying to set an angle that would not result in a
+            width of at least 10 degrees
+        "422":
+          description: "Unprocessable entity, because the width of an exclusion zone\
+            \ must be at least 10 degrees"
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Set the current exclusion zone settings of zone number `id`
+      tags:
+      - Audio
+  /api/audio/inputs/microphone/priorityZones:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                default:
+                - id: 0
+                  enabled: false
+                  weight: 1.5
+                  elevation:
+                    min: 60
+                    max: 80
+                  azimuth:
+                    min: 160
+                    max: 200
+                items:
+                  $ref: '#/components/schemas/_api_audio_inputs_microphone_priorityZones_get_200_response_inner'
+                maxItems: 1
+                minItems: 1
+                type: array
+                uniqueItems: true
+          description: Successful operation
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Get the supported priority zone ids
+      tags:
+      - Audio
+  /api/audio/inputs/microphone/priorityZones/{id}:
+    get:
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          example: 0
+          maximum: 0
+          minimum: 0
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_api_audio_inputs_microphone_priorityZones__id__get_200_response'
+          description: Successful operation
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "404":
+          description: "Not found since the resource is not existing (e.g., the URL\
+            \ contains a wrong ID)"
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Get the current priority zone settings of zone number `id`
+      tags:
+      - Audio
+    put:
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          example: 0
+          maximum: 0
+          minimum: 0
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/_api_audio_inputs_microphone_priorityZones__id__put_request'
+      responses:
+        "200":
+          description: Successful operation
+        "400":
+          description: "Bad request since the format is not correct (e.g., wrong JSON\
+            \ payload)"
+        "401":
+          description: Unauthorized since no user credentials are passed
+        "403":
+          description: Forbidden since the authenticated user is not allowed to access
+            this resource
+        "404":
+          description: "Not found since the resource is not existing (e.g., the URL\
+            \ contains a wrong ID)"
+        "409":
+          description: Conflict. Trying to set an angle that would not result in a
+            width of at least 15 degrees
+        "422":
+          description: "Unprocessable entity, because the width of a priority zone\
+            \ must be at least 15 degrees"
+        "500":
+          description: Internal server error
+      security:
+      - basicAuthApi: []
+      summary: Set the current priority zone settings of zone number `id`
+      tags:
+      - Audio
+components:
+  schemas:
+    _api_audio_inputs_dante_reference_get_200_response:
+      example:
+        farEndAutoAdjustEnabled: true
+        gain: -54
+      properties:
+        gain:
+          default: 0
+          description: The manual gain for the far end detection in dB
+          maximum: 10
+          minimum: -60
+          type: integer
+        farEndAutoAdjustEnabled:
+          default: true
+          description: Indication whether automatic threshold adjustment based on
+            noise floor estimation is enabled
+          type: boolean
+      type: object
+    _api_audio_inputs_microphone_exclusionZones_get_200_response_inner:
+      example:
+        elevation:
+          min: 54
+          max: 13
+        azimuth:
+          min: 214
+          max: 202
+        id: 0
+        enabled: true
+      properties:
+        id:
+          maximum: 4
+          minimum: 0
+          type: integer
+        enabled:
+          type: boolean
+        elevation:
+          $ref: '#/components/schemas/_api_audio_inputs_microphone_exclusionZones_get_200_response_inner_elevation'
+        azimuth:
+          $ref: '#/components/schemas/_api_audio_inputs_microphone_exclusionZones_get_200_response_inner_azimuth'
+      type: object
+    _api_audio_roomInUse_config_get_200_response:
+      example:
+        releaseTime: 363
+        threshold: 5
+        triggerTime: 2
+      properties:
+        triggerTime:
+          default: 15
+          description: Time in s of activity (i.e. activityLevel > threshold) required
+            for room in use to indicate 'true'
+          maximum: 20
+          minimum: 1
+          type: integer
+        releaseTime:
+          default: 300
+          description: Time in s of inactivity required (i.e. activity_level < threshold)
+            for room in use to indicate 'false'
+          maximum: 600
+          minimum: 5
+          type: integer
+        threshold:
+          default: 10
+          description: Activity detection threshold in dB for room in use to turn
+            true
+          maximum: 36
+          minimum: 0
+          type: integer
+      type: object
+    _api_audio_equalizer_put_request:
+      properties:
+        gains:
+          description: "Equalizer bands with cut-off frequencies of 125, 250, 500,\
+            \ 1000, 2000, 4000, 8000 and Q value of 1.4142"
+          items:
+            description: Gain in dB
+            example: 0
+            maximum: 8
+            minimum: -8
+            type: integer
+          maxItems: 7
+          minItems: 7
+          type: array
+      type: object
+    _api_device_identification_get_200_response:
+      example:
+        visual: false
+      properties:
+        visual:
+          default: false
+          type: boolean
+      type: object
+    _api_device_leds_ring_get_200_response_micOn:
+      example:
+        color: Green
+      properties:
+        color:
+          default: Green
+          enum:
+          - LightGreen
+          - Green
+          - Blue
+          - Red
+          - Yellow
+          - Orange
+          - Cyan
+          - Pink
+          type: string
+      type: object
+    _api_audio_inputs_microphone_priorityZones__id__put_request_elevation:
+      properties:
+        min:
+          description: Angle in degrees
+          example: 60
+          maximum: 90
+          minimum: 0
+          multipleOf: 5
+          type: integer
+        max:
+          description: Angle in degrees
+          example: 80
+          maximum: 90
+          minimum: 0
+          multipleOf: 5
+          type: integer
+      type: object
+    _api_audio_inputs_microphone_priorityZones__id__put_request:
+      properties:
+        enabled:
+          type: boolean
+        weight:
+          description: Unitless multiplicator
+          example: 1.5
+          format: float
+          maximum: 4
+          minimum: 1
+          multipleOf: 0.1
+          type: number
+        elevation:
+          $ref: '#/components/schemas/_api_audio_inputs_microphone_priorityZones__id__put_request_elevation'
+        azimuth:
+          $ref: '#/components/schemas/_api_audio_inputs_microphone_priorityZones__id__put_request_azimuth'
+      type: object
+    _api_audio_equalizer_get_200_response:
+      example:
+        gains:
+        - -6
+        - -6
+        - -6
+        - -6
+        - -6
+      properties:
+        gains:
+          description: "Equalizer bands with cut-off frequencies of 125, 250, 500,\
+            \ 1000, 2000, 4000, 8000 and Q value of 1.4142"
+          items:
+            default: 0
+            description: Gain in dB
+            maximum: 8
+            minimum: -8
+            type: integer
+          maxItems: 7
+          minItems: 7
+          type: array
+      type: object
+    _api_audio_inputs_microphone_beam_direction_get_200_response:
+      example:
+        elevation: 54
+        beamFreezeActive: true
+        azimuth: 28
+      properties:
+        azimuth:
+          description: Angle in degrees
+          maximum: 360
+          minimum: 0
+          type: integer
+        elevation:
+          description: Angle in degrees
+          maximum: 90
+          minimum: 0
+          type: integer
+        beamFreezeActive:
+          description: "Indicates whether the beam is in beam-freeze, hence farend\
+            \ activity is recognized"
+          type: boolean
+      type: object
+    _api_audio_inputs_microphone_beam_put_request:
+      properties:
+        installationType:
+          description: The audio signal will be optimized for the chosen installation
+            type.
+          enum:
+          - FlushMounted
+          - SurfaceMounted
+          - Suspended
+          example: FlushMounted
+          type: string
+        sourceDetectionThreshold:
+          description: Threshold for detecting the speaker depending on the room noise
+            level.
+          enum:
+          - QuietRoom
+          - NormalRoom
+          - LoudRoom
+          example: NormalRoom
+          type: string
+        offset:
+          description: Offset to the beam's azimuth angle. This will affect `/audio/metering/beamDirection`
+            and zone settings.
+          maximum: 330
+          minimum: 0
+          multipleOf: 30
+          type: integer
+      type: object
+    _api_audio_outputs_dante_local_put_request:
+      properties:
+        gain:
+          example: 12
+          maximum: 24
+          minimum: 0
+          type: integer
+        noiseGateEnabled:
+          type: boolean
+        equalizerEnabled:
+          type: boolean
+        voiceLiftEnabled:
+          type: boolean
+        delay:
+          example: 0
+          maximum: 100
+          minimum: 0
+          type: integer
+      type: object
+    _api_audio_inputs_microphone_exclusionZones_get_200_response_inner_elevation:
+      example:
+        min: 54
+        max: 13
+      properties:
+        min:
+          description: Angle in degrees
+          maximum: 90
+          minimum: 0
+          multipleOf: 5
+          type: integer
+        max:
+          description: Angle in degrees
+          maximum: 90
+          minimum: 0
+          multipleOf: 5
+          type: integer
+      type: object
+    _api_audio_inputs_microphone_level_get_200_response:
+      example:
+        peak: -82
+      properties:
+        peak:
+          description: Microphone peak level in dB
+          maximum: 0
+          minimum: -90
+          type: integer
+      type: object
+    _api_audio_voiceLift_get_200_response:
+      example:
+        emergencyMuteTime: 18
+        emergencyMuteThreshold: -46
+      properties:
+        emergencyMuteThreshold:
+          default: -20
+          description: Threshold in dB
+          maximum: -3
+          minimum: -50
+          type: integer
+        emergencyMuteTime:
+          default: 3
+          description: Mute time in s
+          maximum: 30
+          minimum: 1
+          type: integer
+      type: object
+    _api_audio_inputs_microphone_exclusionZones_get_200_response_inner_azimuth:
+      example:
+        min: 214
+        max: 202
+      properties:
+        min:
+          description: Angle in degrees
+          maximum: 360
+          minimum: 0
+          multipleOf: 5
+          type: integer
+        max:
+          description: Angle in degrees
+          maximum: 360
+          minimum: 0
+          multipleOf: 5
+          type: integer
+      type: object
+    _api_audio_inputs_dante_reference_put_request:
+      properties:
+        gain:
+          description: The manual gain for the far end detection in dB. Must not be
+            sent if `farEndAutoAdjustEnabled` is `true`.
+          example: 0
+          maximum: 10
+          minimum: -60
+          type: integer
+        farEndAutoAdjustEnabled:
+          description: Enable automatic threshold adjustment based on noise floor
+            estimation. If `true` must not be sent together with `gain`.
+          type: boolean
+      type: object
+    _api_audio_noiseGate_put_request:
+      properties:
+        threshold:
+          description: Threshold in dB
+          example: -80
+          maximum: -40
+          minimum: -90
+          type: integer
+        holdTime:
+          description: Hold time in ms
+          example: 350
+          maximum: 1000
+          minimum: 50
+          type: integer
+      type: object
+    _api_audio_outputs_analog_get_200_response:
+      example:
+        gain: -16
+        switch: FarendOutput
+      properties:
+        gain:
+          default: 0
+          description: Gain in dB
+          maximum: 0
+          minimum: -18
+          type: integer
+        switch:
+          default: FarendOutput
+          enum:
+          - FarendOutput
+          - LocalOutput
+          type: string
+      type: object
+    _api_audio_outputs_global_mute_get_200_response:
+      example:
+        enabled: false
+      properties:
+        enabled:
+          default: false
+          type: boolean
+      type: object
+    _api_audio_inputs_microphone_priorityZones__id__get_200_response:
+      example:
+        elevation:
+          min: 0
+          max: 10
+        weight: 1
+        azimuth:
+          min: 0
+          max: 360
+        enabled: true
+      properties:
+        enabled:
+          type: boolean
+        weight:
+          description: Unitless multiplicator
+          example: 1
+          format: float
+          maximum: 4
+          minimum: 1
+          multipleOf: 0.1
+          type: number
+        elevation:
+          $ref: '#/components/schemas/_api_audio_inputs_microphone_exclusionZones__id__get_200_response_elevation'
+        azimuth:
+          $ref: '#/components/schemas/_api_audio_inputs_microphone_exclusionZones__id__get_200_response_azimuth'
+      type: object
+    _api_audio_inputs_microphone_priorityZones__id__put_request_azimuth:
+      properties:
+        min:
+          description: Angle in degrees
+          example: 160
+          maximum: 360
+          minimum: 0
+          multipleOf: 5
+          type: integer
+        max:
+          description: Angle in degrees
+          example: 200
+          maximum: 360
+          minimum: 0
+          multipleOf: 5
+          type: integer
+      type: object
+    _api_device_leds_ring_put_request_micCustom:
+      properties:
+        enabled:
+          type: boolean
+        color:
+          enum:
+          - LightGreen
+          - Green
+          - Blue
+          - Red
+          - Yellow
+          - Orange
+          - Cyan
+          - Pink
+          example: Green
+          type: string
+      type: object
+    _api_device_power_poe_daisychain_get_200_response:
+      example:
+        sufficientPower: true
+        inUse: true
+      properties:
+        sufficientPower:
+          description: Indicates whether there is sufficient power on the PoE input
+            to power a subsequent device on the PoE output.
+          type: boolean
+        inUse:
+          description: Indicates whether there is a subsequent device being powered
+            on the PoE output.
+          type: boolean
+      type: object
+    _api_audio_roomInUse_activityLevel_get_200_response:
+      example:
+        peak: 0
+      properties:
+        peak:
+          description: Current near-end activity in dB
+          example: 0
+          maximum: 90
+          minimum: 0
+          type: integer
+      type: object
+    _api_device_identity_get_200_response:
+      example:
+        product: TCCM
+        hardwareRevision: "1"
+        serial: "1023456789"
+        vendor: Sennheiser electronic GmbH & Co. KG
+      properties:
+        product:
+          enum:
+          - TCCM
+          example: TCCM
+          type: string
+        hardwareRevision:
+          enum:
+          - "1"
+          example: "1"
+          type: string
+        serial:
+          example: "1023456789"
+          type: string
+        vendor:
+          enum:
+          - Sennheiser electronic GmbH & Co. KG
+          example: Sennheiser electronic GmbH & Co. KG
+          type: string
+      type: object
+    _api_audio_inputs_microphone_exclusionZones__id__get_200_response_azimuth:
+      example:
+        min: 0
+        max: 360
+      properties:
+        min:
+          description: Angle in degrees
+          example: 0
+          maximum: 360
+          minimum: 0
+          multipleOf: 5
+          type: integer
+        max:
+          description: Angle in degrees
+          example: 360
+          maximum: 360
+          minimum: 0
+          multipleOf: 5
+          type: integer
+      type: object
+    _api_audio_inputs_microphone_exclusionZones__id__get_200_response:
+      description: For the defaults of the individual zones see /api/audio/inputs/microphone/exclusionZones
+      example:
+        elevation:
+          min: 0
+          max: 10
+        azimuth:
+          min: 0
+          max: 360
+        enabled: true
+      properties:
+        enabled:
+          type: boolean
+        elevation:
+          $ref: '#/components/schemas/_api_audio_inputs_microphone_exclusionZones__id__get_200_response_elevation'
+        azimuth:
+          $ref: '#/components/schemas/_api_audio_inputs_microphone_exclusionZones__id__get_200_response_azimuth'
+      type: object
+    _api_device_leds_ring_put_request_micOn:
+      properties:
+        color:
+          enum:
+          - LightGreen
+          - Green
+          - Blue
+          - Red
+          - Yellow
+          - Orange
+          - Cyan
+          - Pink
+          example: Green
+          type: string
+      type: object
+    _api_audio_outputs_dante_local_get_200_response:
+      example:
+        noiseGateEnabled: false
+        delay: 60
+        voiceLiftEnabled: false
+        equalizerEnabled: false
+        gain: 1
+      properties:
+        gain:
+          default: 12
+          maximum: 24
+          minimum: 0
+          type: integer
+        noiseGateEnabled:
+          default: false
+          type: boolean
+        equalizerEnabled:
+          default: false
+          type: boolean
+        voiceLiftEnabled:
+          default: false
+          type: boolean
+        delay:
+          default: 0
+          description: Delay in ms
+          maximum: 100
+          minimum: 0
+          type: integer
+      type: object
+    _api_audio_outputs_global_mute_put_request:
+      properties:
+        enabled:
+          type: boolean
+      type: object
+    _api_audio_roomInUse_get_200_response:
+      example:
+        active: true
+      properties:
+        active:
+          description: Indication whether the room is considered to be in use
+          type: boolean
+      type: object
+    _api_firmware_update_state_get_200_response:
+      example:
+        danteVersion: danteVersion
+        progress: 8
+        deviceVersion: deviceVersion
+        state: Idle
+        lastStatus: None
+      properties:
+        deviceVersion:
+          description: The firmware version of the system running at the moment.
+          type: string
+        danteVersion:
+          description: The Dante firmware version of the system running at the moment.
+          type: string
+        state:
+          default: Idle
+          enum:
+          - Updating
+          - Idle
+          type: string
+        progress:
+          default: 0
+          description: Progress in percent
+          format: uint8
+          maximum: 100
+          minimum: 0
+          type: integer
+        lastStatus:
+          default: None
+          description: Value is reset to None after reboot and on every start of FW
+            update
+          enum:
+          - None
+          - ChecksumError
+          type: string
+      type: object
+    _api_audio_inputs_microphone_exclusionZones__id__put_request:
+      properties:
+        enabled:
+          type: boolean
+        elevation:
+          $ref: '#/components/schemas/_api_audio_inputs_microphone_exclusionZones__id__get_200_response_elevation'
+        azimuth:
+          $ref: '#/components/schemas/_api_audio_inputs_microphone_exclusionZones__id__get_200_response_azimuth'
+      type: object
+    _api_device_leds_ring_put_request:
+      properties:
+        brightness:
+          description: "The brightness of the led ring can be controlled in 6 steps,\
+            \ where 0 is off and 5 is full brightness."
+          enum:
+          - 0
+          - 1
+          - 2
+          - 3
+          - 4
+          - 5
+          example: 5
+          type: integer
+        showFarendActivity:
+          type: boolean
+        micOn:
+          $ref: '#/components/schemas/_api_device_leds_ring_put_request_micOn'
+        micMute:
+          $ref: '#/components/schemas/_api_device_leds_ring_put_request_micOn'
+        micCustom:
+          $ref: '#/components/schemas/_api_device_leds_ring_put_request_micCustom'
+      type: object
+    _api_ssc_version_get_200_response:
+      example:
+        schema: "1.0"
+        protocol: "2.2"
+      properties:
+        protocol:
+          description: The version of SSC protocol.
+          example: "2.2"
+          type: string
+        schema:
+          description: This is the schema version of the API of the TCC M device.
+            Semantic versioning must be used. So additional paths or properties will
+            increase the minor number while breaking changes increase the integer
+            part before the decimal point.
+          example: "1.0"
+          type: string
+      type: object
+    _api_audio_inputs_reference_level_get_200_response:
+      example:
+        rms: -110
+      properties:
+        rms:
+          description: RMS level in dBfs of the digital reference input
+          maximum: 0
+          minimum: -120
+          type: integer
+      type: object
+    _api_device_leds_ring_get_200_response_micCustom:
+      example:
+        color: Green
+        enabled: false
+      properties:
+        enabled:
+          default: false
+          type: boolean
+        color:
+          default: Green
+          enum:
+          - LightGreen
+          - Green
+          - Blue
+          - Red
+          - Yellow
+          - Orange
+          - Cyan
+          - Pink
+          type: string
+      type: object
+    _api_ssc_state_subscriptions__sessionUUID__add_put_400_response:
+      properties:
+        path:
+          example: /api/ssc/invalid
+          type: string
+        error:
+          example: 404
+          type: integer
+      type: object
+    _api_device_state_get_200_response:
+      example:
+        warnings:
+        - warnings
+        - warnings
+        state: Normal
+      properties:
+        state:
+          default: Normal
+          enum:
+          - Normal
+          - Identifying
+          - FirmwareUpdate
+          type: string
+        warnings:
+          default: []
+          items:
+            type: string
+          type: array
+      type: object
+    _api_device_site_get_200_response:
+      example:
+        location: Room
+        position: over central table
+        deviceName: TCCM
+      properties:
+        deviceName:
+          default: TCCM
+          type: string
+        location:
+          default: Room
+          type: string
+        position:
+          default: over central table
+          type: string
+      type: object
+    _api_device_identification_put_request:
+      example:
+        visual: true
+      properties:
+        visual:
+          type: boolean
+      type: object
+    _api_audio_inputs_microphone_beam_get_200_response:
+      example:
+        installationType: FlushMounted
+        offset: 26
+        sourceDetectionThreshold: NormalRoom
+      properties:
+        installationType:
+          default: FlushMounted
+          description: The audio signal will be optimized for the chosen installation
+            type.
+          enum:
+          - FlushMounted
+          - SurfaceMounted
+          - Suspended
+          type: string
+        sourceDetectionThreshold:
+          default: NormalRoom
+          description: Threshold for detecting the speaker depending on the room noise
+            level.
+          enum:
+          - QuietRoom
+          - NormalRoom
+          - LoudRoom
+          type: string
+        offset:
+          default: 0
+          description: Offset to the beam's azimuth angle. This will affect the beam
+            metering and zone settings.
+          maximum: 330
+          minimum: 0
+          multipleOf: 30
+          type: integer
+      type: object
+    _api_device_leds_ring_get_200_response:
+      example:
+        brightness: 0
+        micOn:
+          color: Green
+        showFarendActivity: false
+        micMute:
+          color: Green
+        micCustom:
+          color: Green
+          enabled: false
+      properties:
+        brightness:
+          default: 5
+          description: "The brightness of the led ring can be controlled in 6 steps,\
+            \ where 0 is off and 5 is full brightness."
+          enum:
+          - 0
+          - 1
+          - 2
+          - 3
+          - 4
+          - 5
+          type: integer
+        showFarendActivity:
+          default: false
+          type: boolean
+        micOn:
+          $ref: '#/components/schemas/_api_device_leds_ring_get_200_response_micOn'
+        micMute:
+          $ref: '#/components/schemas/_api_device_leds_ring_get_200_response_micOn'
+        micCustom:
+          $ref: '#/components/schemas/_api_device_leds_ring_get_200_response_micCustom'
+      type: object
+    _api_audio_outputs_dante_farEnd_put_request:
+      properties:
+        gain:
+          description: Gain in dB
+          example: 12
+          maximum: 24
+          minimum: 0
+          type: integer
+        noiseGateEnabled:
+          description: Applies the settings from /api/audio/noiseGate
+          type: boolean
+        equalizerEnabled:
+          description: Applies the settings from /api/audio/equalizer
+          type: boolean
+        delay:
+          description: Delay in ms
+          example: 0
+          maximum: 100
+          minimum: 0
+          type: integer
+      type: object
+    _api_audio_voiceLift_put_request:
+      properties:
+        emergencyMuteThreshold:
+          description: Threshold in dB
+          example: -20
+          maximum: -3
+          minimum: -50
+          type: integer
+        emergencyMuteTime:
+          description: Mute time in s
+          example: 3
+          maximum: 30
+          minimum: 1
+          type: integer
+      type: object
+    _api_audio_outputs_analog_put_request:
+      properties:
+        gain:
+          description: Gain in dB
+          example: 0
+          maximum: 0
+          minimum: -18
+          type: integer
+        switch:
+          enum:
+          - FarendOutput
+          - LocalOutput
+          example: FarendOutput
+          type: string
+      type: object
+    _api_ssc_state_subscriptions__sessionUUID__remove_put_400_response:
+      properties:
+        path:
+          example: /api/ssc/version
+          type: string
+        error:
+          example: 404
+          type: integer
+      type: object
+    _api_audio_inputs_microphone_priorityZones_get_200_response_inner:
+      example:
+        elevation:
+          min: 54
+          max: 13
+        weight: 1.2402484
+        azimuth:
+          min: 214
+          max: 202
+        id: 0
+        enabled: true
+      properties:
+        id:
+          example: 0
+          maximum: 0
+          minimum: 0
+          type: integer
+        enabled:
+          type: boolean
+        weight:
+          description: Unitless multiplicator
+          format: float
+          maximum: 4
+          minimum: 1
+          multipleOf: 0.1
+          type: number
+        elevation:
+          $ref: '#/components/schemas/_api_audio_inputs_microphone_exclusionZones_get_200_response_inner_elevation'
+        azimuth:
+          $ref: '#/components/schemas/_api_audio_inputs_microphone_exclusionZones_get_200_response_inner_azimuth'
+      type: object
+    _api_audio_outputs_dante_farEnd_get_200_response:
+      example:
+        noiseGateEnabled: false
+        delay: 60
+        equalizerEnabled: false
+        gain: 1
+      properties:
+        gain:
+          default: 12
+          description: Gain in dB
+          maximum: 24
+          minimum: 0
+          type: integer
+        noiseGateEnabled:
+          default: false
+          description: Indication whether the settings from /api/audio/noiseGate are
+            applied for this output
+          type: boolean
+        equalizerEnabled:
+          default: false
+          description: Indication whether the settings from /api/audio/equalizer are
+            applied for this output
+          type: boolean
+        delay:
+          default: 0
+          description: Delay in ms
+          maximum: 100
+          minimum: 0
+          type: integer
+      type: object
+    _api_audio_inputs_microphone_exclusionZones__id__get_200_response_elevation:
+      example:
+        min: 0
+        max: 10
+      properties:
+        min:
+          description: Angle in degrees
+          example: 0
+          maximum: 90
+          minimum: 0
+          multipleOf: 5
+          type: integer
+        max:
+          description: Angle in degrees
+          example: 10
+          maximum: 90
+          minimum: 0
+          multipleOf: 5
+          type: integer
+      type: object
+    _api_audio_noiseGate_get_200_response:
+      example:
+        threshold: -85
+        holdTime: 622
+      properties:
+        threshold:
+          default: -80
+          description: Threshold in dB
+          maximum: -40
+          minimum: -90
+          type: integer
+        holdTime:
+          default: 350
+          description: Hold time in ms
+          maximum: 1000
+          minimum: 50
+          type: integer
+      type: object
+  securitySchemes:
+    basicAuthApi:
+      description: "Username\\:api, Password\\:configured by the user when enabling\
+        \ third party access to the device using Sennheiser Control Cockpit"
+      scheme: basic
+      type: http
